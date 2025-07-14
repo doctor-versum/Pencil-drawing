@@ -10,8 +10,9 @@
       padding: 0;
       background: white;
       overflow: hidden;
-      user-select: none; /* ✅ Nichts auswählbar */
+      user-select: none;
       -webkit-user-select: none;
+      height: 100%;
     }
 
     canvas {
@@ -77,29 +78,89 @@
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, w, h);
           break;
+
         case 'black':
           ctx.fillStyle = 'black';
           ctx.fillRect(0, 0, w, h);
           break;
+
         case 'grid':
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, w, h);
-          ctx.strokeStyle = 'lightgray';
+          const gridSize = 50;
+          const centerX = w / 2;
+          const centerY = h / 2;
+
+          ctx.strokeStyle = '#ccc';
           ctx.lineWidth = 1;
+          ctx.font = "12px sans-serif";
+          ctx.fillStyle = "#888";
+          ctx.textAlign = "left";
+          ctx.textBaseline = "top";
+
+          // Vertikale Linien
+          for (let x = centerX; x < w; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+
+            if (x !== centerX) {
+              ctx.fillText(`+${x - centerX}`, x + 2, centerY + 2);
+            }
+          }
+          for (let x = centerX - gridSize; x > 0; x -= gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, h);
+            ctx.stroke();
+
+            ctx.fillText(`${x - centerX}`, x + 2, centerY + 2);
+          }
+
+          // Horizontale Linien
+          for (let y = centerY; y < h; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+
+            if (y !== centerY) {
+              ctx.fillText(`+${centerY - y}`, centerX + 2, y + 2);
+            }
+          }
+          for (let y = centerY - gridSize; y > 0; y -= gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(w, y);
+            ctx.stroke();
+
+            ctx.fillText(`${centerY - y}`, centerX + 2, y + 2);
+          }
+
+          // Achsen
+          ctx.strokeStyle = '#888';
+          ctx.lineWidth = 2;
 
           ctx.beginPath();
-          ctx.moveTo(w / 2, 0);
-          ctx.lineTo(w / 2, h);
-          ctx.moveTo(0, h / 2);
-          ctx.lineTo(w, h / 2);
+          ctx.moveTo(centerX, 0);
+          ctx.lineTo(centerX, h);
           ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(0, centerY);
+          ctx.lineTo(w, centerY);
+          ctx.stroke();
+
+          ctx.fillText("0,0", centerX + 4, centerY + 4);
           break;
+
         case 'appleborder':
           ctx.fillStyle = 'white';
           ctx.fillRect(0, 0, w, h);
           ctx.strokeStyle = 'gray';
           ctx.lineWidth = 2;
-          const borderX = 60; // z. B. 60px links
+          const borderX = 60;
           ctx.beginPath();
           ctx.moveTo(borderX, 0);
           ctx.lineTo(borderX, h);
@@ -145,7 +206,6 @@
     canvas.addEventListener('pointerout', () => drawing = false);
     canvas.addEventListener('pointercancel', () => drawing = false);
 
-    // Vollbild
     function enterFullscreen() {
       const elem = document.documentElement;
       if (elem.requestFullscreen) elem.requestFullscreen();
@@ -166,7 +226,6 @@
       bgBtn.classList.toggle('hidden', isFS);
     });
 
-    // Hintergrund-Button
     bgBtn.addEventListener('click', () => {
       currentBackground = (currentBackground + 1) % backgrounds.length;
       drawBackground();

@@ -10,17 +10,18 @@
       padding: 0;
       background: white;
       overflow: hidden;
+      user-select: none; /* ✅ Nichts auswählbar */
+      -webkit-user-select: none;
     }
 
     canvas {
       display: block;
-      touch-action: none; /* Wichtig für Pencil-Eingabe */
+      touch-action: none;
     }
 
-    #fullscreenBtn {
+    .btn {
       position: fixed;
       top: 10px;
-      right: 10px;
       padding: 12px 20px;
       font-size: 16px;
       background-color: rgba(255, 0, 0, 0.8);
@@ -29,30 +30,87 @@
       border-radius: 8px;
       cursor: pointer;
       z-index: 1000;
+      user-select: none;
     }
 
-    #fullscreenBtn.hidden {
+    #fullscreenBtn {
+      right: 10px;
+    }
+
+    #bgBtn {
+      left: 10px;
+    }
+
+    .hidden {
       display: none;
     }
   </style>
 </head>
 <body>
   <canvas id="canvas"></canvas>
-  <button id="fullscreenBtn">Vollbild</button>
+  <button id="fullscreenBtn" class="btn">Vollbild</button>
+  <button id="bgBtn" class="btn">Hintergrund</button>
 
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+
     const fsBtn = document.getElementById('fullscreenBtn');
+    const bgBtn = document.getElementById('bgBtn');
+
+    const backgrounds = ['white', 'black', 'grid', 'appleborder'];
+    let currentBackground = 0;
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      drawBackground();
     }
+
+    function drawBackground() {
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      switch (backgrounds[currentBackground]) {
+        case 'white':
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, w, h);
+          break;
+        case 'black':
+          ctx.fillStyle = 'black';
+          ctx.fillRect(0, 0, w, h);
+          break;
+        case 'grid':
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = 'lightgray';
+          ctx.lineWidth = 1;
+
+          ctx.beginPath();
+          ctx.moveTo(w / 2, 0);
+          ctx.lineTo(w / 2, h);
+          ctx.moveTo(0, h / 2);
+          ctx.lineTo(w, h / 2);
+          ctx.stroke();
+          break;
+        case 'appleborder':
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, w, h);
+          ctx.strokeStyle = 'gray';
+          ctx.lineWidth = 2;
+          const borderX = 60; // z. B. 60px links
+          ctx.beginPath();
+          ctx.moveTo(borderX, 0);
+          ctx.lineTo(borderX, h);
+          ctx.stroke();
+          break;
+      }
+    }
+
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // Zeichenlogik
     let drawing = false;
     let lastX = 0;
     let lastY = 0;
@@ -87,26 +145,31 @@
     canvas.addEventListener('pointerout', () => drawing = false);
     canvas.addEventListener('pointercancel', () => drawing = false);
 
-    // Vollbild-Handling
+    // Vollbild
     function enterFullscreen() {
       const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-      } else if (elem.webkitRequestFullscreen) { // Safari
-        elem.webkitRequestFullscreen();
-      }
+      if (elem.requestFullscreen) elem.requestFullscreen();
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
     }
 
     fsBtn.addEventListener('click', enterFullscreen);
 
-    // Button ausblenden wenn im Vollbild
     document.addEventListener('fullscreenchange', () => {
-      fsBtn.classList.toggle('hidden', document.fullscreenElement != null);
+      const isFS = document.fullscreenElement != null;
+      fsBtn.classList.toggle('hidden', isFS);
+      bgBtn.classList.toggle('hidden', isFS);
     });
 
-    // Für Safari (webkit)
     document.addEventListener('webkitfullscreenchange', () => {
-      fsBtn.classList.toggle('hidden', document.webkitFullscreenElement != null);
+      const isFS = document.webkitFullscreenElement != null;
+      fsBtn.classList.toggle('hidden', isFS);
+      bgBtn.classList.toggle('hidden', isFS);
+    });
+
+    // Hintergrund-Button
+    bgBtn.addEventListener('click', () => {
+      currentBackground = (currentBackground + 1) % backgrounds.length;
+      drawBackground();
     });
   </script>
 </body>
